@@ -80,3 +80,5 @@ INSTANCE_NAME_BACKEND=backend
 ![Ejercicio2](imagenes/ejercicio2-4.1.png)
 ![Ejercicio2-parte-2](imagenes/ejercicio2-parte2-4.1.png)
 ![Ejercicio2-parte-3](imagenes/ejercicio2-parte3-4.1.png)
+
+## Ejercicio 3. Crea una instancia EC2 para la máquina del Backend con las siguientes características. Identificador de la AMI: ami-08e637cea2f053dfa. Número de instancias: 1, Tipo de instancia: t2.micro, Clave privada: vockey, Grupo de seguridad: backend-sg, Nombre de la instancia: backend
