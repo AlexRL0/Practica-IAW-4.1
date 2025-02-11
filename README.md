@@ -158,6 +158,25 @@ aws ec2 run-instances \
     --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$INSTANCE_NAME_NFS}]"
 ```
 
+El archivo de variables para este ejercicio quedaría tal que así:
+
+```bash
+AMI_ID=ami-0c7217cdde317cfec
+COUNT=1
+INSTANCE_TYPE=t2.small
+KEY_NAME=vockey
+
+SECURITY_GROUP_FRONTEND=frontend_sg
+SECURITY_GROUP_BACKEND=backend_sg
+SECURITY_GROUP_BALANCEADOR=balanceador_sg
+SECURITY_GROUP_NFS=nfs_sg
+
+INSTANCE_NAME_FRONTEND=frontend
+INSTANCE_NAME_BACKEND=backend
+INSTANCE_NAME_BALANCEADOR=balanceador
+INSTANCE_NAME_NFS=nfs
+```
+
 ![Ejercicio3](imagenes/ejercicio3-4.1.png)
 ![Ejercicio3-parte-2](imagenes/ejercicio3-parte2-4.1.png)
 ![Ejercicio3-parte-3](imagenes/ejercicio3-parte3-4.1.png)
