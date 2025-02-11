@@ -127,7 +127,7 @@ for i in {1..2}; do
     --instance-type $INSTANCE_TYPE \
     --key-name $KEY_NAME \
     --security-groups $SECURITY_GROUP_FRONTEND \
-    --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$INSTANCE_NAME_FRONTEND_$i}]"
+    --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=frontend-$i}]"
 done
 
 # Crear una instancia EC2 para el backend
@@ -156,6 +156,7 @@ aws ec2 run-instances \
     --key-name $KEY_NAME \
     --security-groups $SECURITY_GROUP_NFS \
     --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$INSTANCE_NAME_NFS}]"
+
 ```
 
 La ejecución del script es tan largo que no encuentro la forma de poner una captura de que se ejecuta correctamente.
