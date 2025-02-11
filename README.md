@@ -117,7 +117,7 @@ aws ec2 authorize-security-group-ingress --group-name $SECURITY_GROUP_BALANCEADO
 # Creamos el grupo de seguridad: nfs-sg
 aws ec2 create-security-group --group-name $SECURITY_GROUP_NFS --description "Reglas para el servidor NFS"
 aws ec2 authorize-security-group-ingress --group-name $SECURITY_GROUP_NFS --protocol tcp --port 22 --cidr 0.0.0.0/0
-aws ec2 authorize-security-group-ingress --group-name $SECURITY_GROUP_NFS --protocol tcp --port 2049 
+aws ec2 authorize-security-group-ingress --group-name $SECURITY_GROUP_NFS --protocol tcp --port 2049 --cidr 0.0.0.0/0
 
 # Crear instancias EC2 para el frontend
 for i in {1..2}; do
@@ -156,11 +156,8 @@ aws ec2 run-instances \
     --key-name $KEY_NAME \
     --security-groups $SECURITY_GROUP_NFS \
     --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$INSTANCE_NAME_NFS}]"
-
 ```
 
-La ejecución del script es tan largo que no encuentro la forma de poner una captura de que se ejecuta correctamente.
-
-![Ejercicio3](imagenes)
+![Ejercicio3](imagenes/ejercicio3-4.1.png)
 ![Ejercicio3-parte-2](imagenes)
 ![Ejercicio3-parte-3](imagenes)
