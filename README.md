@@ -163,3 +163,5 @@ aws ec2 run-instances \
 ![Ejercicio3-parte-3](imagenes/ejercicio3-parte3-4.1.png)
 ![Ejercicio3-parte-4](imagenes/ejercicio3-parte4-4.1.png)
 ![Ejercicio3-parte-5](imagenes/ejercicio3-parte5-4.1.png)
+![Ejercicio3-parte-6](imagenes/ejercicio3-parte6-4.1.png)
+
