@@ -165,3 +165,63 @@ aws ec2 run-instances \
 ![Ejercicio3-parte-5](imagenes/ejercicio3-parte5-4.1.png)
 ![Ejercicio3-parte-6](imagenes/ejercicio3-parte6-4.1.png)
 
+## Ejercicio 3.2. Crear un script para la eliminación de la infraestructura de la práctica 1.11.
+
+```bash
+#!/bin/bash
+set -x
+
+# Deshabilitamos la paginación de la salida de los comandos de AWS CLI
+export AWS_PAGER=""
+
+# Variables de configuración
+source .env
+
+# Crear un grupo de seguridad temporal
+TEMP_SG=$(aws ec2 create-security-group --group-name temp-sg --description "Temporal security group" --output text)
+
+# Eliminar instancias EC2 para el frontend
+for i in {1..2}; do
+  INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=frontend-$i" --query "Reservations[].Instances[].InstanceId" --output text)
+  aws ec2 terminate-instances --instance-ids $INSTANCE_ID
+done
+
+# Eliminar instancia EC2 para el backend
+INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=$INSTANCE_NAME_BACKEND" --query "Reservations[].Instances[].InstanceId" --output text)
+aws ec2 terminate-instances --instance-ids $INSTANCE_ID
+
+# Eliminar instancia EC2 para el balanceador de carga
+INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=$INSTANCE_NAME_BALANCEADOR" --query "Reservations[].Instances[].InstanceId" --output text)
+aws ec2 terminate-instances --instance-ids $INSTANCE_ID
+
+# Eliminar instancia EC2 para el NFS
+INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=$INSTANCE_NAME_NFS" --query "Reservations[].Instances[].InstanceId" --output text)
+aws ec2 terminate-instances --instance-ids $INSTANCE_ID
+
+# Esperar a que todas las instancias se terminen
+aws ec2 wait instance-terminated --instance-ids $(aws ec2 describe-instances --filters "Name=instance-state-name,Values=terminated" --query "Reservations[].Instances[].InstanceId" --output text)
+
+# Disociar grupos de seguridad de las interfaces de red y asociar el grupo de seguridad temporal
+for SG in $SECURITY_GROUP_FRONTEND $SECURITY_GROUP_BACKEND $SECURITY_GROUP_BALANCEADOR $SECURITY_GROUP_NFS; do
+  NETWORK_INTERFACES=$(aws ec2 describe-network-interfaces --filters "Name=group-name,Values=$SG" --query "NetworkInterfaces[].NetworkInterfaceId" --output text)
+  for NI in $NETWORK_INTERFACES; do
+    aws ec2 modify-network-interface-attribute --network-interface-id $NI --groups $TEMP_SG
+  done
+done
+
+# Eliminar grupos de seguridad
+aws ec2 delete-security-group --group-name $SECURITY_GROUP_FRONTEND
+aws ec2 delete-security-group --group-name $SECURITY_GROUP_BACKEND
+aws ec2 delete-security-group --group-name $SECURITY_GROUP_BALANCEADOR
+aws ec2 delete-security-group --group-name $SECURITY_GROUP_NFS
+
+# Eliminar el grupo de seguridad temporal
+aws ec2 delete-security-group --group-id $TEMP_SG
+```
+
+![Ejercicio3-2](imagenes/ejercicio3-4.1.png)
+![Ejercicio3-2-parte-2](imagenes/ejercicio3-parte2-4.1.png)
+![Ejercicio3-2-parte-3](imagenes/ejercicio3-parte3-4.1.png)
+![Ejercicio3-2-parte-4](imagenes/ejercicio3-parte4-4.1.png)
+![Ejercicio3-2-parte-5](imagenes/ejercicio3-parte5-4.1.png)
+![Ejercicio3-2-parte-6](imagenes/ejercicio3-parte6-4.1.png)
