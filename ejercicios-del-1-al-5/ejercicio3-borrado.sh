@@ -7,23 +7,51 @@ export AWS_PAGER=""
 # Variables de configuración
 source .env
 
-# Eliminar instancias EC2 para el frontend
+# Desasociar grupos de seguridad de las instancias EC2
 for i in {1..2}; do
   INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=frontend-$i" --query "Reservations[].Instances[].InstanceId" --output text)
-  aws ec2 terminate-instances --instance-ids $INSTANCE_ID
+  if [ -n "$INSTANCE_ID" ]; then
+    aws ec2 modify-instance-attribute --instance-id $INSTANCE_ID --groups ""
+  fi
 done
 
-# Eliminar instancia EC2 para el backend
 INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=$INSTANCE_NAME_BACKEND" --query "Reservations[].Instances[].InstanceId" --output text)
-aws ec2 terminate-instances --instance-ids $INSTANCE_ID
+if [ -n "$INSTANCE_ID" ]; then
+  aws ec2 modify-instance-attribute --instance-id $INSTANCE_ID --groups ""
+fi
 
-# Eliminar instancia EC2 para el balanceador de carga
 INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=$INSTANCE_NAME_BALANCEADOR" --query "Reservations[].Instances[].InstanceId" --output text)
-aws ec2 terminate-instances --instance-ids $INSTANCE_ID
+if [ -n "$INSTANCE_ID" ]; then
+  aws ec2 modify-instance-attribute --instance-id $INSTANCE_ID --groups ""
+fi
 
-# Eliminar instancia EC2 para el NFS
 INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=$INSTANCE_NAME_NFS" --query "Reservations[].Instances[].InstanceId" --output text)
-aws ec2 terminate-instances --instance-ids $INSTANCE_ID
+if [ -n "$INSTANCE_ID" ]; then
+  aws ec2 modify-instance-attribute --instance-id $INSTANCE_ID --groups ""
+fi
+
+# Eliminar instancias EC2
+for i in {1..2}; do
+  INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=frontend-$i" --query "Reservations[].Instances[].InstanceId" --output text)
+  if [ -n "$INSTANCE_ID" ];then
+    aws ec2 terminate-instances --instance-ids $INSTANCE_ID
+  fi
+done
+
+INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=$INSTANCE_NAME_BACKEND" --query "Reservations[].Instances[].InstanceId" --output text)
+if [ -n "$INSTANCE_ID" ];then
+  aws ec2 terminate-instances --instance-ids $INSTANCE_ID
+fi
+
+INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=$INSTANCE_NAME_BALANCEADOR" --query "Reservations[].Instances[].InstanceId" --output text)
+if [ -n "$INSTANCE_ID" ];then
+  aws ec2 terminate-instances --instance-ids $INSTANCE_ID
+fi
+
+INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=$INSTANCE_NAME_NFS" --query "Reservations[].Instances[].InstanceId" --output text)
+if [ -n "$INSTANCE_ID" ];then
+  aws ec2 terminate-instances --instance-ids $INSTANCE_ID
+fi
 
 # Esperar a que todas las instancias se terminen
 aws ec2 wait instance-terminated --instance-ids $(aws ec2 describe-instances --filters "Name=instance-state-name,Values=terminated" --query "Reservations[].Instances[].InstanceId" --output text)
