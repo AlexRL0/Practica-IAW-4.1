@@ -247,9 +247,9 @@ aws ec2 delete-security-group --group-name $SECURITY_GROUP_BALANCEADOR
 aws ec2 delete-security-group --group-name $SECURITY_GROUP_NFS
 ```
 
-![Ejercicio3-2](imagenes/ejercicio3-4.1.png)
-![Ejercicio3-2-parte-2](imagenes/ejercicio3-parte2-4.1.png)
-![Ejercicio3-2-parte-3](imagenes/ejercicio3-parte3-4.1.png)
-![Ejercicio3-2-parte-4](imagenes/ejercicio3-parte4-4.1.png)
-![Ejercicio3-2-parte-5](imagenes/ejercicio3-parte5-4.1.png)
-![Ejercicio3-2-parte-6](imagenes/ejercicio3-parte6-4.1.png)
+![Ejercicio3-2](imagenes)
+![Ejercicio3-2-parte-2](imagenes)
+![Ejercicio3-2-parte-3](imagenes)
+![Ejercicio3-2-parte-4](imagenes)
+![Ejercicio3-2-parte-5](imagenes)
+![Ejercicio3-2-parte-6](imagenes)
