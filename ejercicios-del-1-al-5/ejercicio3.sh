@@ -41,7 +41,7 @@ for i in {1..2}; do
     --instance-type $INSTANCE_TYPE \
     --key-name $KEY_NAME \
     --security-groups $SECURITY_GROUP_FRONTEND \
-    --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$INSTANCE_NAME_FRONTEND_$i}]"
+    --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=frontend-$i}]"
 done
 
 # Crear una instancia EC2 para el backend

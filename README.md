@@ -158,6 +158,8 @@ aws ec2 run-instances \
     --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$INSTANCE_NAME_NFS}]"
 ```
 
+La ejecución del script es tan largo que no encuentro la forma de poner una captura de que se ejecuta correctamente.
+
 ![Ejercicio3](imagenes)
 ![Ejercicio3-parte-2](imagenes)
 ![Ejercicio3-parte-3](imagenes)
