@@ -236,6 +236,7 @@ aws ec2 delete-security-group --group-name $SECURITY_GROUP_NFS
 
 # Eliminar el grupo de seguridad temporal
 aws ec2 delete-security-group --group-id $TEMP_SG
+
 ```
 
 ![Ejercicio3-2](imagenes/ejercicio3-4.1.png)
