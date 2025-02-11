@@ -43,5 +43,40 @@ Como se puede ver, a creado el grupo con el nombre indicado y con las reglas cor
 ## Ejercicio 2. Crea una instancia EC2 para la máquina del Backend con las siguientes características. Identificador de la AMI: ami-08e637cea2f053dfa. Número de instancias: 1, Tipo de instancia: t2.micro, Clave privada: vockey, Grupo de seguridad: backend-sg, Nombre de la instancia: backend
 
 ```bash
+#!/bin/bash
+set -x
 
+# Deshabilitamos la paginación de la salida de los comandos de AWS CLI
+export AWS_PAGER=""
+
+# Variables de configuración
+source .env
+
+# Creamos una intancia EC2 para el backend
+aws ec2 run-instances \
+    --image-id $AMI_ID \
+    --count $COUNT \
+    --instance-type $INSTANCE_TYPE \
+    --key-name $KEY_NAME \
+    --security-groups $SECURITY_GROUP_BACKEND \
+    --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$INSTANCE_NAME_BACKEND}]"
 ```
+
+El archivo de variables para este ejercicio quedaría tal que así:
+
+```bash
+AMI_ID=ami-08e637cea2f053dfa
+COUNT=1
+INSTANCE_TYPE=t2.micro
+KEY_NAME=vockey
+
+SECURITY_GROUP_FRONTEND=frontend-sg
+SECURITY_GROUP_BACKEND=backend-sg
+
+INSTANCE_NAME_FRONTEND=frontend
+INSTANCE_NAME_BACKEND=backend
+```
+
+![Ejercicio2](imagenes/ejercicio2-4.1.png)
+![Ejercicio2-parte-2](imagenes/ejercicio2-parte2-4.1.png)
+![Ejercicio2-parte-3](imagenes/ejercicio2-parte3-4.1.png)
