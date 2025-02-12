@@ -7,45 +7,58 @@ export AWS_PAGER=""
 # Variables de configuración
 source .env
 
-# Función para eliminar una instancia, liberar la IP elástica y eliminar grupos de seguridad
-borrado() {
-  local INSTANCE_NAME=$1
-  local ALLOCATION_ID=$2
-  local SECURITY_GROUP=$3
-
-  # Obtenemos el ID de la instancia a partir de su nombre
+# Eliminar instancias frontend y liberar IPs elásticas
+for i in {1..2}; do
   INSTANCE_ID=$(aws ec2 describe-instances \
-                --filters "Name=tag:Name,Values=$INSTANCE_NAME" \
+                --filters "Name=tag:Name,Values=frontend-$i" \
                           "Name=instance-state-name,Values=running" \
                 --query "Reservations[*].Instances[*].InstanceId" \
                 --output text)
 
-  # Disociar la IP elástica de la instancia
   aws ec2 disassociate-address --instance-id $INSTANCE_ID
-
-  # Liberar la IP elástica
-  aws ec2 release-address --allocation-id $ALLOCATION_ID
-
-  # Terminar la instancia EC2
+  aws ec2 release-address --allocation-id ${ELASTIC_IP_FRONTEND[i]}
   aws ec2 terminate-instances --instance-ids $INSTANCE_ID
-
-  # Esperar a que la instancia se termine
   aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID
-
-  # Eliminar el grupo de seguridad
-  aws ec2 delete-security-group --group-name $SECURITY_GROUP
-}
-
-# Eliminar instancias frontend, liberar IPs elásticas y eliminar grupos de seguridad
-for i in {1..2}; do
-  borrado "frontend-$i" ${ELASTIC_IP_FRONTEND[i]} $SECURITY_GROUP_FRONTEND
 done
 
-# Eliminar instancia backend, liberar IP elástica y eliminar grupo de seguridad
-borrado $INSTANCE_NAME_BACKEND $ELASTIC_IP_BACKEND $SECURITY_GROUP_BACKEND
+# Eliminar instancia backend y liberar IP elástica
+INSTANCE_ID_BACKEND=$(aws ec2 describe-instances \
+                      --filters "Name=tag:Name,Values=$INSTANCE_NAME_BACKEND" \
+                                "Name=instance-state-name,Values=running" \
+                      --query "Reservations[*].Instances[*].InstanceId" \
+                      --output text)
 
-# Eliminar instancia balanceador, liberar IP elástica y eliminar grupo de seguridad
-borrado $INSTANCE_NAME_BALANCEADOR $ELASTIC_IP_BALANCEADOR $SECURITY_GROUP_BALANCEADOR
+aws ec2 disassociate-address --instance-id $INSTANCE_ID_BACKEND
+aws ec2 release-address --allocation-id $ELASTIC_IP_BACKEND
+aws ec2 terminate-instances --instance-ids $INSTANCE_ID_BACKEND
+aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID_BACKEND
 
-# Eliminar instancia NFS, liberar IP elástica y eliminar grupo de seguridad
-borrado $INSTANCE_NAME_NFS $ELASTIC_IP_NFS $SECURITY_GROUP_NFS
+# Eliminar instancia balanceador y liberar IP elástica
+INSTANCE_ID_BALANCEADOR=$(aws ec2 describe-instances \
+                          --filters "Name=tag:Name,Values=$INSTANCE_NAME_BALANCEADOR" \
+                                    "Name=instance-state-name,Values=running" \
+                          --query "Reservations[*].Instances[*].InstanceId" \
+                          --output text)
+
+aws ec2 disassociate-address --instance-id $INSTANCE_ID_BALANCEADOR
+aws ec2 release-address --allocation-id $ELASTIC_IP_BALANCEADOR
+aws ec2 terminate-instances --instance-ids $INSTANCE_ID_BALANCEADOR
+aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID_BALANCEADOR
+
+# Eliminar instancia NFS y liberar IP elástica
+INSTANCE_ID_NFS=$(aws ec2 describe-instances \
+                  --filters "Name=tag:Name,Values=$INSTANCE_NAME_NFS" \
+                            "Name=instance-state-name,Values=running" \
+                  --query "Reservations[*].Instances[*].InstanceId" \
+                  --output text)
+
+aws ec2 disassociate-address --instance-id $INSTANCE_ID_NFS
+aws ec2 release-address --allocation-id $ELASTIC_IP_NFS
+aws ec2 terminate-instances --instance-ids $INSTANCE_ID_NFS
+aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID_NFS
+
+# Eliminar grupos de seguridad
+aws ec2 delete-security-group --group-name $SECURITY_GROUP_FRONTEND
+aws ec2 delete-security-group --group-name $SECURITY_GROUP_BACKEND
+aws ec2 delete-security-group --group-name $SECURITY_GROUP_BALANCEADOR
+aws ec2 delete-security-group --group-name $SECURITY_GROUP_NFS
