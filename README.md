@@ -329,4 +329,4 @@ done
 
 ## Ejercicio 6. Modifique los scripts del repositorio de ejemplo para crear la infraestructura 1.11.
 
-Pues simplemente e cogido lo que tenia hecho del ejercicio 3 y lo he troceado en los diferentes scripts.
+Pues simplemente e cogido lo que tenia hecho del ejercicio 3 y lo he troceado en los diferentes scripts del repositorio de ejemplo.
