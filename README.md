@@ -303,6 +303,7 @@ INSTANCE_NAME_BACKEND=backend
 Y para que se ejecute el comando en las instancias durante el inicio hay que hacerlo así:
 
 ![Ejercicio4-parte-2](imagenes/ejercicio4-4.1-parte-2.png)
+![Ejercicio4-parte-3](imagenes/ejercicio4-4.1-parte-3.png)
 
 ## Ejercicio 5. Escribir un script de bash que muestre el nombre de todas instancias EC2 que tiene en ejecución junto a su dirección IP pública.
 
