@@ -7,7 +7,7 @@ export AWS_PAGER=""
 # Variables de configuración
 source .env
 
-# Eliminar instancias frontend y liberar IPs elásticas
+# Eliminar instancias frontend, liberar IPs elásticas y esperar a que estén terminadas
 for i in {1..2}; do
   INSTANCE_ID=$(aws ec2 describe-instances \
                 --filters "Name=tag:Name,Values=frontend-$i" \
@@ -21,7 +21,7 @@ for i in {1..2}; do
   aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID
 done
 
-# Eliminar instancia backend y liberar IP elástica
+# Eliminar instancia backend, liberar IP elástica y esperar a que esté terminada
 INSTANCE_ID_BACKEND=$(aws ec2 describe-instances \
                       --filters "Name=tag:Name,Values=$INSTANCE_NAME_BACKEND" \
                                 "Name=instance-state-name,Values=running" \
@@ -33,7 +33,7 @@ aws ec2 release-address --allocation-id $ELASTIC_IP_BACKEND
 aws ec2 terminate-instances --instance-ids $INSTANCE_ID_BACKEND
 aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID_BACKEND
 
-# Eliminar instancia balanceador y liberar IP elástica
+# Eliminar instancia balanceador, liberar IP elástica y esperar a que esté terminada
 INSTANCE_ID_BALANCEADOR=$(aws ec2 describe-instances \
                           --filters "Name=tag:Name,Values=$INSTANCE_NAME_BALANCEADOR" \
                                     "Name=instance-state-name,Values=running" \
@@ -45,7 +45,7 @@ aws ec2 release-address --allocation-id $ELASTIC_IP_BALANCEADOR
 aws ec2 terminate-instances --instance-ids $INSTANCE_ID_BALANCEADOR
 aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID_BALANCEADOR
 
-# Eliminar instancia NFS y liberar IP elástica
+# Eliminar instancia NFS, liberar IP elástica y esperar a que esté terminada
 INSTANCE_ID_NFS=$(aws ec2 describe-instances \
                   --filters "Name=tag:Name,Values=$INSTANCE_NAME_NFS" \
                             "Name=instance-state-name,Values=running" \
