@@ -2,7 +2,6 @@
 set -x
 
 # Deshabilitamos la paginación de la salida de los comandos de AWS CLI
-# Referencia: https://docs.aws.amazon.com/es_es/cli/latest/userguide/cliv2-migration.html#cliv2-migration-output-pager
 export AWS_PAGER=""
 
 # Obtenemos la lista de Id de las direcciones IP elásticas públicas

@@ -326,3 +326,7 @@ done
 ```
 
 ![Ejercicio5](imagenes/ejercicio5-4.1.png)
+
+## Ejercicio 6. Modifique los scripts del repositorio de ejemplo para crear la infraestructura 1.11.
+
+Pues simplemente e cogido lo que tenia hecho del ejercicio 3 y lo he troceado en los diferentes scripts.
