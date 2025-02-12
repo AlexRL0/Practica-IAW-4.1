@@ -8,17 +8,15 @@ export AWS_PAGER=""
 source .env
 
 # Eliminar instancias frontend, liberar IPs elásticas y esperar a que estén terminadas
-for i in {1..2}; do
+for i in 1 2; do
   INSTANCE_ID=$(aws ec2 describe-instances \
-                --filters "Name=tag:Name,Values=frontend-$i" \
+                --filters "Name=tag:Name,Values=$INSTANCE_NAME_FRONTEND-$i" \
                           "Name=instance-state-name,Values=running" \
                 --query "Reservations[*].Instances[*].InstanceId" \
                 --output text)
 
-  ELASTIC_IP=$(aws ec2 describe-addresses \
-               --filters "Name=instance-id,Values=$INSTANCE_ID" \
-               --query 'Addresses[0].PublicIp' \
-               --output text)
+  ELASTIC_IP_VAR="ELASTIC_IP_FRONTEND_$i"
+  ELASTIC_IP=${!ELASTIC_IP_VAR}
 
   aws ec2 disassociate-address --public-ip $ELASTIC_IP
   aws ec2 release-address --public-ip $ELASTIC_IP
@@ -33,10 +31,7 @@ INSTANCE_ID_BACKEND=$(aws ec2 describe-instances \
                       --query "Reservations[*].Instances[*].InstanceId" \
                       --output text)
 
-ELASTIC_IP_BACKEND=$(aws ec2 describe-addresses \
-                     --filters "Name=instance-id,Values=$INSTANCE_ID_BACKEND" \
-                     --query 'Addresses[0].PublicIp' \
-                     --output text)
+ELASTIC_IP_BACKEND=$ELASTIC_IP_BACKEND
 
 aws ec2 disassociate-address --public-ip $ELASTIC_IP_BACKEND
 aws ec2 release-address --public-ip $ELASTIC_IP_BACKEND
@@ -50,10 +45,7 @@ INSTANCE_ID_BALANCEADOR=$(aws ec2 describe-instances \
                           --query "Reservations[*].Instances[*].InstanceId" \
                           --output text)
 
-ELASTIC_IP_BALANCEADOR=$(aws ec2 describe-addresses \
-                         --filters "Name=instance-id,Values=$INSTANCE_ID_BALANCEADOR" \
-                         --query 'Addresses[0].PublicIp' \
-                         --output text)
+ELASTIC_IP_BALANCEADOR=$ELASTIC_IP_BALANCEADOR
 
 aws ec2 disassociate-address --public-ip $ELASTIC_IP_BALANCEADOR
 aws ec2 release-address --public-ip $ELASTIC_IP_BALANCEADOR
@@ -67,10 +59,7 @@ INSTANCE_ID_NFS=$(aws ec2 describe-instances \
                   --query "Reservations[*].Instances[*].InstanceId" \
                   --output text)
 
-ELASTIC_IP_NFS=$(aws ec2 describe-addresses \
-                 --filters "Name=instance-id,Values=$INSTANCE_ID_NFS" \
-                 --query 'Addresses[0].PublicIp' \
-                 --output text)
+ELASTIC_IP_NFS=$ELASTIC_IP_NFS
 
 aws ec2 disassociate-address --public-ip $ELASTIC_IP_NFS
 aws ec2 release-address --public-ip $ELASTIC_IP_NFS
