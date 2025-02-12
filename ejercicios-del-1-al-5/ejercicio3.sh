@@ -7,13 +7,17 @@ export AWS_PAGER=""
 # Variables de configuración
 source .env
 
-# Crear IPs elásticas
+# Crear IPs elásticas y guardar en el archivo .env
 for i in {1..2}; do
   ELASTIC_IP_FRONTEND[i]=$(aws ec2 allocate-address --query 'PublicIp' --output text)
+  echo "ELASTIC_IP_FRONTEND_$i=${ELASTIC_IP_FRONTEND[i]}" >> .env
 done
 ELASTIC_IP_BACKEND=$(aws ec2 allocate-address --query 'PublicIp' --output text)
+echo "ELASTIC_IP_BACKEND=$ELASTIC_IP_BACKEND" >> .env
 ELASTIC_IP_BALANCEADOR=$(aws ec2 allocate-address --query 'PublicIp' --output text)
+echo "ELASTIC_IP_BALANCEADOR=$ELASTIC_IP_BALANCEADOR" >> .env
 ELASTIC_IP_NFS=$(aws ec2 allocate-address --query 'PublicIp' --output text)
+echo "ELASTIC_IP_NFS=$ELASTIC_IP_NFS" >> .env
 
 # Creamos el grupo de seguridad: frontend-sg
 aws ec2 create-security-group --group-name $SECURITY_GROUP_FRONTEND --description "Reglas para el frontend"
