@@ -54,7 +54,7 @@ for i in {1..2}; do
 
   aws ec2 wait instance-running --instance-ids $INSTANCE_ID
 
-  aws ec2 associate-address --instance-id $INSTANCE_ID --allocation-id ${ELASTIC_IP_FRONTEND[i]}
+  aws ec2 associate-address --instance-id $INSTANCE_ID --public-ip ${ELASTIC_IP_FRONTEND[i]}
 done
 
 # Crear una instancia EC2 para el backend y esperar a que esté en estado running
@@ -69,7 +69,7 @@ INSTANCE_ID_BACKEND=$(aws ec2 run-instances \
 
 aws ec2 wait instance-running --instance-ids $INSTANCE_ID_BACKEND
 
-aws ec2 associate-address --instance-id $INSTANCE_ID_BACKEND --allocation-id $ELASTIC_IP_BACKEND
+aws ec2 associate-address --instance-id $INSTANCE_ID_BACKEND --public-ip $ELASTIC_IP_BACKEND
 
 # Crear una instancia EC2 para el balanceador de carga y esperar a que esté en estado running
 INSTANCE_ID_BALANCEADOR=$(aws ec2 run-instances \
@@ -83,7 +83,7 @@ INSTANCE_ID_BALANCEADOR=$(aws ec2 run-instances \
 
 aws ec2 wait instance-running --instance-ids $INSTANCE_ID_BALANCEADOR
 
-aws ec2 associate-address --instance-id $INSTANCE_ID_BALANCEADOR --allocation-id $ELASTIC_IP_BALANCEADOR
+aws ec2 associate-address --instance-id $INSTANCE_ID_BALANCEADOR --public-ip $ELASTIC_IP_BALANCEADOR
 
 # Crear una instancia EC2 para el NFS y esperar a que esté en estado running
 INSTANCE_ID_NFS=$(aws ec2 run-instances \
@@ -97,4 +97,4 @@ INSTANCE_ID_NFS=$(aws ec2 run-instances \
 
 aws ec2 wait instance-running --instance-ids $INSTANCE_ID_NFS
 
-aws ec2 associate-address --instance-id $INSTANCE_ID_NFS --allocation-id $ELASTIC_IP_NFS
+aws ec2 associate-address --instance-id $INSTANCE_ID_NFS --public-ip $ELASTIC_IP_NFS
