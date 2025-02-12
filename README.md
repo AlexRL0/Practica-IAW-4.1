@@ -95,11 +95,11 @@ source .env
 
 # Crear IPs elásticas
 for i in {1..2}; do
-  ELASTIC_IP_FRONTEND[i]=$(aws ec2 allocate-address --query 'AllocationId')
+  ELASTIC_IP_FRONTEND[i]=$(aws ec2 allocate-address --query 'PublicIp' --output text)
 done
-ELASTIC_IP_BACKEND=$(aws ec2 allocate-address --query 'AllocationId')
-ELASTIC_IP_BALANCEADOR=$(aws ec2 allocate-address --query 'AllocationId')
-ELASTIC_IP_NFS=$(aws ec2 allocate-address --query 'AllocationId')
+ELASTIC_IP_BACKEND=$(aws ec2 allocate-address --query 'PublicIp' --output text)
+ELASTIC_IP_BALANCEADOR=$(aws ec2 allocate-address --query 'PublicIp' --output text)
+ELASTIC_IP_NFS=$(aws ec2 allocate-address --query 'PublicIp' --output text)
 
 # Creamos el grupo de seguridad: frontend-sg
 aws ec2 create-security-group --group-name $SECURITY_GROUP_FRONTEND --description "Reglas para el frontend"
@@ -125,9 +125,9 @@ aws ec2 authorize-security-group-ingress --group-name $SECURITY_GROUP_BALANCEADO
 # Creamos el grupo de seguridad: nfs-sg
 aws ec2 create-security-group --group-name $SECURITY_GROUP_NFS --description "Reglas para el servidor NFS"
 aws ec2 authorize-security-group-ingress --group-name $SECURITY_GROUP_NFS --protocol tcp --port 22 --cidr 0.0.0.0/0
-aws ec2 authorize-security-group-ingress --group-name $SECURITY_GROUP_NFS --protocol tcp --port 2049 
+aws ec2 authorize-security-group-ingress --group-name $SECURITY_GROUP_NFS --protocol tcp --port 2049 --cidr 0.0.0.0/0
 
-# Crear instancias EC2 para el frontend
+# Crear instancias EC2 para el frontend y esperar a que estén en estado running
 for i in {1..2}; do
   INSTANCE_ID=$(aws ec2 run-instances \
     --image-id $AMI_ID \
@@ -136,12 +136,14 @@ for i in {1..2}; do
     --key-name $KEY_NAME \
     --security-groups $SECURITY_GROUP_FRONTEND \
     --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=frontend-$i}]" \
-    --query 'Instances[0].InstanceId')
+    --query 'Instances[0].InstanceId' --output text)
 
-  aws ec2 associate-address --instance-id $INSTANCE_ID --allocation-id ${ELASTIC_IP_FRONTEND[i]}
+  aws ec2 wait instance-running --instance-ids $INSTANCE_ID
+
+  aws ec2 associate-address --instance-id $INSTANCE_ID --public-ip ${ELASTIC_IP_FRONTEND[i]}
 done
 
-# Crear una instancia EC2 para el backend
+# Crear una instancia EC2 para el backend y esperar a que esté en estado running
 INSTANCE_ID_BACKEND=$(aws ec2 run-instances \
     --image-id $AMI_ID \
     --count 1 \
@@ -149,11 +151,13 @@ INSTANCE_ID_BACKEND=$(aws ec2 run-instances \
     --key-name $KEY_NAME \
     --security-groups $SECURITY_GROUP_BACKEND \
     --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$INSTANCE_NAME_BACKEND}]" \
-    --query 'Instances[0].InstanceId')
+    --query 'Instances[0].InstanceId' --output text)
 
-aws ec2 associate-address --instance-id $INSTANCE_ID_BACKEND --allocation-id $ELASTIC_IP_BACKEND
+aws ec2 wait instance-running --instance-ids $INSTANCE_ID_BACKEND
 
-# Crear una instancia EC2 para el balanceador de carga
+aws ec2 associate-address --instance-id $INSTANCE_ID_BACKEND --public-ip $ELASTIC_IP_BACKEND
+
+# Crear una instancia EC2 para el balanceador de carga y esperar a que esté en estado running
 INSTANCE_ID_BALANCEADOR=$(aws ec2 run-instances \
     --image-id $AMI_ID \
     --count 1 \
@@ -161,11 +165,13 @@ INSTANCE_ID_BALANCEADOR=$(aws ec2 run-instances \
     --key-name $KEY_NAME \
     --security-groups $SECURITY_GROUP_BALANCEADOR \
     --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$INSTANCE_NAME_BALANCEADOR}]" \
-    --query 'Instances[0].InstanceId')
+    --query 'Instances[0].InstanceId' --output text)
 
-aws ec2 associate-address --instance-id $INSTANCE_ID_BALANCEADOR --allocation-id $ELASTIC_IP_BALANCEADOR
+aws ec2 wait instance-running --instance-ids $INSTANCE_ID_BALANCEADOR
 
-# Crear una instancia EC2 para el NFS
+aws ec2 associate-address --instance-id $INSTANCE_ID_BALANCEADOR --public-ip $ELASTIC_IP_BALANCEADOR
+
+# Crear una instancia EC2 para el NFS y esperar a que esté en estado running
 INSTANCE_ID_NFS=$(aws ec2 run-instances \
     --image-id $AMI_ID \
     --count 1 \
@@ -173,28 +179,11 @@ INSTANCE_ID_NFS=$(aws ec2 run-instances \
     --key-name $KEY_NAME \
     --security-groups $SECURITY_GROUP_NFS \
     --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$INSTANCE_NAME_NFS}]" \
-    --query 'Instances[0].InstanceId')
+    --query 'Instances[0].InstanceId' --output text)
 
-aws ec2 associate-address --instance-id $INSTANCE_ID_NFS --allocation-id $ELASTIC_IP_NFS
-```
+aws ec2 wait instance-running --instance-ids $INSTANCE_ID_NFS
 
-El archivo de variables para este ejercicio quedaría tal que así:
-
-```bash
-AMI_ID=ami-0c7217cdde317cfec
-COUNT=1
-INSTANCE_TYPE=t2.small
-KEY_NAME=vockey
-
-SECURITY_GROUP_FRONTEND=frontend_sg
-SECURITY_GROUP_BACKEND=backend_sg
-SECURITY_GROUP_BALANCEADOR=balanceador_sg
-SECURITY_GROUP_NFS=nfs_sg
-
-INSTANCE_NAME_FRONTEND=frontend
-INSTANCE_NAME_BACKEND=backend
-INSTANCE_NAME_BALANCEADOR=balanceador
-INSTANCE_NAME_NFS=nfs
+aws ec2 associate-address --instance-id $INSTANCE_ID_NFS --public-ip $ELASTIC_IP_NFS
 ```
 
 ![Ejercicio3](imagenes/ejercicio3-4.1.png)
@@ -216,29 +205,55 @@ export AWS_PAGER=""
 # Variables de configuración
 source .env
 
-# Disociar IPs elásticas y liberarlas
+# Eliminar instancias frontend, liberar IPs elásticas y esperar a que estén terminadas
 for i in {1..2}; do
-  aws ec2 disassociate-address --association-id $(aws ec2 describe-addresses --query "Addresses[?AllocationId=='${ELASTIC_IP_FRONTEND[i]}'].AssociationId" --output text)
-  aws ec2 release-address --allocation-id ${ELASTIC_IP_FRONTEND[i]}
+  INSTANCE_ID=$(aws ec2 describe-instances \
+                --filters "Name=tag:Name,Values=frontend-$i" \
+                          "Name=instance-state-name,Values=running" \
+                --query "Reservations[*].Instances[*].InstanceId" \
+                --output text)
+
+  aws ec2 disassociate-address --public-ip ${ELASTIC_IP_FRONTEND[i]}
+  aws ec2 release-address --public-ip ${ELASTIC_IP_FRONTEND[i]}
+  aws ec2 terminate-instances --instance-ids $INSTANCE_ID
+  aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID
 done
 
-aws ec2 disassociate-address --association-id $(aws ec2 describe-addresses --query "Addresses[?AllocationId=='$ELASTIC_IP_BACKEND'].AssociationId" --output text)
-aws ec2 release-address --allocation-id $ELASTIC_IP_BACKEND
+# Eliminar instancia backend, liberar IP elástica y esperar a que esté terminada
+INSTANCE_ID_BACKEND=$(aws ec2 describe-instances \
+                      --filters "Name=tag:Name,Values=$INSTANCE_NAME_BACKEND" \
+                                "Name=instance-state-name,Values=running" \
+                      --query "Reservations[*].Instances[*].InstanceId" \
+                      --output text)
 
-aws ec2 disassociate-address --association-id $(aws ec2 describe-addresses --query "Addresses[?AllocationId=='$ELASTIC_IP_BALANCEADOR'].AssociationId" --output text)
-aws ec2 release-address --allocation-id $ELASTIC_IP_BALANCEADOR
-
-aws ec2 disassociate-address --association-id $(aws ec2 describe-addresses --query "Addresses[?AllocationId=='$ELASTIC_IP_NFS'].AssociationId" --output text)
-aws ec2 release-address --allocation-id $ELASTIC_IP_NFS
-
-# Eliminar instancias EC2
-for instance in $(aws ec2 describe-instances --query "Reservations[*].Instances[?Tags[?Key=='Name' && Value=='frontend-*']].InstanceId" --output text); do
-  aws ec2 terminate-instances --instance-ids $instance
-done
-
+aws ec2 disassociate-address --public-ip $ELASTIC_IP_BACKEND
+aws ec2 release-address --public-ip $ELASTIC_IP_BACKEND
 aws ec2 terminate-instances --instance-ids $INSTANCE_ID_BACKEND
+aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID_BACKEND
+
+# Eliminar instancia balanceador, liberar IP elástica y esperar a que esté terminada
+INSTANCE_ID_BALANCEADOR=$(aws ec2 describe-instances \
+                          --filters "Name=tag:Name,Values=$INSTANCE_NAME_BALANCEADOR" \
+                                    "Name=instance-state-name,Values=running" \
+                          --query "Reservations[*].Instances[*].InstanceId" \
+                          --output text)
+
+aws ec2 disassociate-address --public-ip $ELASTIC_IP_BALANCEADOR
+aws ec2 release-address --public-ip $ELASTIC_IP_BALANCEADOR
 aws ec2 terminate-instances --instance-ids $INSTANCE_ID_BALANCEADOR
+aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID_BALANCEADOR
+
+# Eliminar instancia NFS, liberar IP elástica y esperar a que esté terminada
+INSTANCE_ID_NFS=$(aws ec2 describe-instances \
+                  --filters "Name=tag:Name,Values=$INSTANCE_NAME_NFS" \
+                            "Name=instance-state-name,Values=running" \
+                  --query "Reservations[*].Instances[*].InstanceId" \
+                  --output text)
+
+aws ec2 disassociate-address --public-ip $ELASTIC_IP_NFS
+aws ec2 release-address --public-ip $ELASTIC_IP_NFS
 aws ec2 terminate-instances --instance-ids $INSTANCE_ID_NFS
+aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID_NFS
 
 # Eliminar grupos de seguridad
 aws ec2 delete-security-group --group-name $SECURITY_GROUP_FRONTEND

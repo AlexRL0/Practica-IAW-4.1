@@ -15,8 +15,8 @@ for i in {1..2}; do
                 --query "Reservations[*].Instances[*].InstanceId" \
                 --output text)
 
-  aws ec2 disassociate-address --instance-id $INSTANCE_ID
-  aws ec2 release-address --allocation-id ${ELASTIC_IP_FRONTEND[i]}
+  aws ec2 disassociate-address --public-ip ${ELASTIC_IP_FRONTEND[i]}
+  aws ec2 release-address --public-ip ${ELASTIC_IP_FRONTEND[i]}
   aws ec2 terminate-instances --instance-ids $INSTANCE_ID
   aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID
 done
@@ -28,8 +28,8 @@ INSTANCE_ID_BACKEND=$(aws ec2 describe-instances \
                       --query "Reservations[*].Instances[*].InstanceId" \
                       --output text)
 
-aws ec2 disassociate-address --instance-id $INSTANCE_ID_BACKEND
-aws ec2 release-address --allocation-id $ELASTIC_IP_BACKEND
+aws ec2 disassociate-address --public-ip $ELASTIC_IP_BACKEND
+aws ec2 release-address --public-ip $ELASTIC_IP_BACKEND
 aws ec2 terminate-instances --instance-ids $INSTANCE_ID_BACKEND
 aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID_BACKEND
 
@@ -40,8 +40,8 @@ INSTANCE_ID_BALANCEADOR=$(aws ec2 describe-instances \
                           --query "Reservations[*].Instances[*].InstanceId" \
                           --output text)
 
-aws ec2 disassociate-address --instance-id $INSTANCE_ID_BALANCEADOR
-aws ec2 release-address --allocation-id $ELASTIC_IP_BALANCEADOR
+aws ec2 disassociate-address --public-ip $ELASTIC_IP_BALANCEADOR
+aws ec2 release-address --public-ip $ELASTIC_IP_BALANCEADOR
 aws ec2 terminate-instances --instance-ids $INSTANCE_ID_BALANCEADOR
 aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID_BALANCEADOR
 
@@ -52,8 +52,8 @@ INSTANCE_ID_NFS=$(aws ec2 describe-instances \
                   --query "Reservations[*].Instances[*].InstanceId" \
                   --output text)
 
-aws ec2 disassociate-address --instance-id $INSTANCE_ID_NFS
-aws ec2 release-address --allocation-id $ELASTIC_IP_NFS
+aws ec2 disassociate-address --public-ip $ELASTIC_IP_NFS
+aws ec2 release-address --public-ip $ELASTIC_IP_NFS
 aws ec2 terminate-instances --instance-ids $INSTANCE_ID_NFS
 aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID_NFS
 
