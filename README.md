@@ -213,8 +213,13 @@ for i in {1..2}; do
                 --query "Reservations[*].Instances[*].InstanceId" \
                 --output text)
 
+  ELASTIC_IP=$(aws ec2 describe-addresses \
+               --filters "Name=public-ip,Values=${ELASTIC_IP_FRONTEND[i]}" \
+               --query "Addresses[0].AllocationId" \
+               --output text)
+
   aws ec2 disassociate-address --public-ip ${ELASTIC_IP_FRONTEND[i]}
-  aws ec2 release-address --public-ip ${ELASTIC_IP_FRONTEND[i]}
+  aws ec2 release-address --allocation-id $ELASTIC_IP
   aws ec2 terminate-instances --instance-ids $INSTANCE_ID
   aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID
 done
@@ -226,8 +231,13 @@ INSTANCE_ID_BACKEND=$(aws ec2 describe-instances \
                       --query "Reservations[*].Instances[*].InstanceId" \
                       --output text)
 
+ELASTIC_IP_BACKEND_ID=$(aws ec2 describe-addresses \
+                       --filters "Name=public-ip,Values=$ELASTIC_IP_BACKEND" \
+                       --query "Addresses[0].AllocationId" \
+                       --output text)
+
 aws ec2 disassociate-address --public-ip $ELASTIC_IP_BACKEND
-aws ec2 release-address --public-ip $ELASTIC_IP_BACKEND
+aws ec2 release-address --allocation-id $ELASTIC_IP_BACKEND_ID
 aws ec2 terminate-instances --instance-ids $INSTANCE_ID_BACKEND
 aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID_BACKEND
 
@@ -238,8 +248,13 @@ INSTANCE_ID_BALANCEADOR=$(aws ec2 describe-instances \
                           --query "Reservations[*].Instances[*].InstanceId" \
                           --output text)
 
+ELASTIC_IP_BALANCEADOR_ID=$(aws ec2 describe-addresses \
+                           --filters "Name=public-ip,Values=$ELASTIC_IP_BALANCEADOR" \
+                           --query "Addresses[0].AllocationId" \
+                           --output text)
+
 aws ec2 disassociate-address --public-ip $ELASTIC_IP_BALANCEADOR
-aws ec2 release-address --public-ip $ELASTIC_IP_BALANCEADOR
+aws ec2 release-address --allocation-id $ELASTIC_IP_BALANCEADOR_ID
 aws ec2 terminate-instances --instance-ids $INSTANCE_ID_BALANCEADOR
 aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID_BALANCEADOR
 
@@ -250,8 +265,13 @@ INSTANCE_ID_NFS=$(aws ec2 describe-instances \
                   --query "Reservations[*].Instances[*].InstanceId" \
                   --output text)
 
+ELASTIC_IP_NFS_ID=$(aws ec2 describe-addresses \
+                   --filters "Name=public-ip,Values=$ELASTIC_IP_NFS" \
+                   --query "Addresses[0].AllocationId" \
+                   --output text)
+
 aws ec2 disassociate-address --public-ip $ELASTIC_IP_NFS
-aws ec2 release-address --public-ip $ELASTIC_IP_NFS
+aws ec2 release-address --allocation-id $ELASTIC_IP_NFS_ID
 aws ec2 terminate-instances --instance-ids $INSTANCE_ID_NFS
 aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID_NFS
 
