@@ -23,7 +23,6 @@ for i in 1 2; do
                  --query 'Addresses[0].AllocationId' \
                  --output text)
 
-  aws ec2 disassociate-address --allocation-id $ALLOCATION_ID
   aws ec2 release-address --allocation-id $ALLOCATION_ID
   aws ec2 terminate-instances --instance-ids $INSTANCE_ID
   aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID
@@ -41,7 +40,6 @@ ALLOCATION_ID_BACKEND=$(aws ec2 describe-addresses \
                      --query 'Addresses[0].AllocationId' \
                      --output text)
 
-aws ec2 disassociate-address --allocation-id $ALLOCATION_ID_BACKEND
 aws ec2 release-address --allocation-id $ALLOCATION_ID_BACKEND
 aws ec2 terminate-instances --instance-ids $INSTANCE_ID_BACKEND
 aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID_BACKEND
@@ -58,7 +56,6 @@ ALLOCATION_ID_BALANCEADOR=$(aws ec2 describe-addresses \
                          --query 'Addresses[0].AllocationId' \
                          --output text)
 
-aws ec2 disassociate-address --allocation-id $ALLOCATION_ID_BALANCEADOR
 aws ec2 release-address --allocation-id $ALLOCATION_ID_BALANCEADOR
 aws ec2 terminate-instances --instance-ids $INSTANCE_ID_BALANCEADOR
 aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID_BALANCEADOR
@@ -75,7 +72,6 @@ ALLOCATION_ID_NFS=$(aws ec2 describe-addresses \
                  --query 'Addresses[0].AllocationId' \
                  --output text)
 
-aws ec2 disassociate-address --allocation-id $ALLOCATION_ID_NFS
 aws ec2 release-address --allocation-id $ALLOCATION_ID_NFS
 aws ec2 terminate-instances --instance-ids $INSTANCE_ID_NFS
 aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID_NFS
