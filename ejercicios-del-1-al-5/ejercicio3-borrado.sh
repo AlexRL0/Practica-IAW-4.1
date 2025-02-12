@@ -10,7 +10,7 @@ source .env
 # Eliminar instancias frontend, liberar IPs elásticas y esperar a que estén terminadas
 for i in 1 2; do
   INSTANCE_ID=$(aws ec2 describe-instances \
-                --filters "Name=tag:Name,Values=$INSTANCE_NAME_FRONTEND-$i" \
+                --filters "Name=tag:Name,Values=${INSTANCE_NAME_FRONTEND}-$i" \
                           "Name=instance-state-name,Values=running" \
                 --query "Reservations[*].Instances[*].InstanceId" \
                 --output text)
@@ -18,8 +18,13 @@ for i in 1 2; do
   ELASTIC_IP_VAR="ELASTIC_IP_FRONTEND_$i"
   ELASTIC_IP=${!ELASTIC_IP_VAR}
 
-  aws ec2 disassociate-address --public-ip $ELASTIC_IP
-  aws ec2 release-address --public-ip $ELASTIC_IP
+  ALLOCATION_ID=$(aws ec2 describe-addresses \
+                 --filters "Name=public-ip,Values=$ELASTIC_IP" \
+                 --query 'Addresses[0].AllocationId' \
+                 --output text)
+
+  aws ec2 disassociate-address --allocation-id $ALLOCATION_ID
+  aws ec2 release-address --allocation-id $ALLOCATION_ID
   aws ec2 terminate-instances --instance-ids $INSTANCE_ID
   aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID
 done
@@ -31,10 +36,13 @@ INSTANCE_ID_BACKEND=$(aws ec2 describe-instances \
                       --query "Reservations[*].Instances[*].InstanceId" \
                       --output text)
 
-ELASTIC_IP_BACKEND=$ELASTIC_IP_BACKEND
+ALLOCATION_ID_BACKEND=$(aws ec2 describe-addresses \
+                     --filters "Name=public-ip,Values=$ELASTIC_IP_BACKEND" \
+                     --query 'Addresses[0].AllocationId' \
+                     --output text)
 
-aws ec2 disassociate-address --public-ip $ELASTIC_IP_BACKEND
-aws ec2 release-address --public-ip $ELASTIC_IP_BACKEND
+aws ec2 disassociate-address --allocation-id $ALLOCATION_ID_BACKEND
+aws ec2 release-address --allocation-id $ALLOCATION_ID_BACKEND
 aws ec2 terminate-instances --instance-ids $INSTANCE_ID_BACKEND
 aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID_BACKEND
 
@@ -45,10 +53,13 @@ INSTANCE_ID_BALANCEADOR=$(aws ec2 describe-instances \
                           --query "Reservations[*].Instances[*].InstanceId" \
                           --output text)
 
-ELASTIC_IP_BALANCEADOR=$ELASTIC_IP_BALANCEADOR
+ALLOCATION_ID_BALANCEADOR=$(aws ec2 describe-addresses \
+                         --filters "Name=public-ip,Values=$ELASTIC_IP_BALANCEADOR" \
+                         --query 'Addresses[0].AllocationId' \
+                         --output text)
 
-aws ec2 disassociate-address --public-ip $ELASTIC_IP_BALANCEADOR
-aws ec2 release-address --public-ip $ELASTIC_IP_BALANCEADOR
+aws ec2 disassociate-address --allocation-id $ALLOCATION_ID_BALANCEADOR
+aws ec2 release-address --allocation-id $ALLOCATION_ID_BALANCEADOR
 aws ec2 terminate-instances --instance-ids $INSTANCE_ID_BALANCEADOR
 aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID_BALANCEADOR
 
@@ -59,10 +70,13 @@ INSTANCE_ID_NFS=$(aws ec2 describe-instances \
                   --query "Reservations[*].Instances[*].InstanceId" \
                   --output text)
 
-ELASTIC_IP_NFS=$ELASTIC_IP_NFS
+ALLOCATION_ID_NFS=$(aws ec2 describe-addresses \
+                 --filters "Name=public-ip,Values=$ELASTIC_IP_NFS" \
+                 --query 'Addresses[0].AllocationId' \
+                 --output text)
 
-aws ec2 disassociate-address --public-ip $ELASTIC_IP_NFS
-aws ec2 release-address --public-ip $ELASTIC_IP_NFS
+aws ec2 disassociate-address --allocation-id $ALLOCATION_ID_NFS
+aws ec2 release-address --allocation-id $ALLOCATION_ID_NFS
 aws ec2 terminate-instances --instance-ids $INSTANCE_ID_NFS
 aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID_NFS
 

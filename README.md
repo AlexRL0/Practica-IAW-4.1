@@ -93,13 +93,17 @@ export AWS_PAGER=""
 # Variables de configuración
 source .env
 
-# Crear IPs elásticas
+# Crear IPs elásticas y guardar en el archivo .env
 for i in {1..2}; do
   ELASTIC_IP_FRONTEND[i]=$(aws ec2 allocate-address --query 'PublicIp' --output text)
+  echo "ELASTIC_IP_FRONTEND_$i=${ELASTIC_IP_FRONTEND[i]}" >> .env
 done
 ELASTIC_IP_BACKEND=$(aws ec2 allocate-address --query 'PublicIp' --output text)
+echo "ELASTIC_IP_BACKEND=$ELASTIC_IP_BACKEND" >> .env
 ELASTIC_IP_BALANCEADOR=$(aws ec2 allocate-address --query 'PublicIp' --output text)
+echo "ELASTIC_IP_BALANCEADOR=$ELASTIC_IP_BALANCEADOR" >> .env
 ELASTIC_IP_NFS=$(aws ec2 allocate-address --query 'PublicIp' --output text)
+echo "ELASTIC_IP_NFS=$ELASTIC_IP_NFS" >> .env
 
 # Creamos el grupo de seguridad: frontend-sg
 aws ec2 create-security-group --group-name $SECURITY_GROUP_FRONTEND --description "Reglas para el frontend"
@@ -205,24 +209,19 @@ export AWS_PAGER=""
 # Variables de configuración
 source .env
 
-# Asignar IPs elásticas a las variables correctas
-for i in {1..2}; do
-  ELASTIC_IP_FRONTEND[i]=$(aws ec2 describe-addresses --filters "Name=tag:Name,Values=frontend-$i" --query 'Addresses[0].PublicIp' --output text)
-done
-ELASTIC_IP_BACKEND=$(aws ec2 describe-addresses --filters "Name=tag:Name,Values=$INSTANCE_NAME_BACKEND" --query 'Addresses[0].PublicIp' --output text)
-ELASTIC_IP_BALANCEADOR=$(aws ec2 describe-addresses --filters "Name=tag:Name,Values=$INSTANCE_NAME_BALANCEADOR" --query 'Addresses[0].PublicIp' --output text)
-ELASTIC_IP_NFS=$(aws ec2 describe-addresses --filters "Name=tag:Name,Values=$INSTANCE_NAME_NFS" --query 'Addresses[0].PublicIp' --output text)
-
 # Eliminar instancias frontend, liberar IPs elásticas y esperar a que estén terminadas
-for i in {1..2}; do
+for i in 1 2; do
   INSTANCE_ID=$(aws ec2 describe-instances \
-                --filters "Name=tag:Name,Values=frontend-$i" \
+                --filters "Name=tag:Name,Values=$INSTANCE_NAME_FRONTEND-$i" \
                           "Name=instance-state-name,Values=running" \
                 --query "Reservations[*].Instances[*].InstanceId" \
                 --output text)
 
-  aws ec2 disassociate-address --public-ip ${ELASTIC_IP_FRONTEND[i]}
-  aws ec2 release-address --public-ip ${ELASTIC_IP_FRONTEND[i]}
+  ELASTIC_IP_VAR="ELASTIC_IP_FRONTEND_$i"
+  ELASTIC_IP=${!ELASTIC_IP_VAR}
+
+  aws ec2 disassociate-address --public-ip $ELASTIC_IP
+  aws ec2 release-address --public-ip $ELASTIC_IP
   aws ec2 terminate-instances --instance-ids $INSTANCE_ID
   aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID
 done
@@ -233,6 +232,8 @@ INSTANCE_ID_BACKEND=$(aws ec2 describe-instances \
                                 "Name=instance-state-name,Values=running" \
                       --query "Reservations[*].Instances[*].InstanceId" \
                       --output text)
+
+ELASTIC_IP_BACKEND=$ELASTIC_IP_BACKEND
 
 aws ec2 disassociate-address --public-ip $ELASTIC_IP_BACKEND
 aws ec2 release-address --public-ip $ELASTIC_IP_BACKEND
@@ -246,6 +247,8 @@ INSTANCE_ID_BALANCEADOR=$(aws ec2 describe-instances \
                           --query "Reservations[*].Instances[*].InstanceId" \
                           --output text)
 
+ELASTIC_IP_BALANCEADOR=$ELASTIC_IP_BALANCEADOR
+
 aws ec2 disassociate-address --public-ip $ELASTIC_IP_BALANCEADOR
 aws ec2 release-address --public-ip $ELASTIC_IP_BALANCEADOR
 aws ec2 terminate-instances --instance-ids $INSTANCE_ID_BALANCEADOR
@@ -257,6 +260,8 @@ INSTANCE_ID_NFS=$(aws ec2 describe-instances \
                             "Name=instance-state-name,Values=running" \
                   --query "Reservations[*].Instances[*].InstanceId" \
                   --output text)
+
+ELASTIC_IP_NFS=$ELASTIC_IP_NFS
 
 aws ec2 disassociate-address --public-ip $ELASTIC_IP_NFS
 aws ec2 release-address --public-ip $ELASTIC_IP_NFS
