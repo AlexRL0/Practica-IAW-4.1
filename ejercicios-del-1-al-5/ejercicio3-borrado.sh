@@ -21,7 +21,7 @@ for i in {1..2}; do
                --output text)
 
   aws ec2 disassociate-address --public-ip ${ELASTIC_IP_FRONTEND[i]}
-  aws ec2 release-address --allocation-id $ELASTIC_IP
+  aws ec2 release-address --public-ip $ELASTIC_IP
   aws ec2 terminate-instances --instance-ids $INSTANCE_ID
   aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID
 done
@@ -39,7 +39,7 @@ ELASTIC_IP_BACKEND_ID=$(aws ec2 describe-addresses \
                        --output text)
 
 aws ec2 disassociate-address --public-ip $ELASTIC_IP_BACKEND
-aws ec2 release-address --allocation-id $ELASTIC_IP_BACKEND_ID
+aws ec2 release-address --public-ip $ELASTIC_IP_BACKEND_ID
 aws ec2 terminate-instances --instance-ids $INSTANCE_ID_BACKEND
 aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID_BACKEND
 
@@ -56,7 +56,7 @@ ELASTIC_IP_BALANCEADOR_ID=$(aws ec2 describe-addresses \
                            --output text)
 
 aws ec2 disassociate-address --public-ip $ELASTIC_IP_BALANCEADOR
-aws ec2 release-address --allocation-id $ELASTIC_IP_BALANCEADOR_ID
+aws ec2 release-address --public-ip $ELASTIC_IP_BALANCEADOR_ID
 aws ec2 terminate-instances --instance-ids $INSTANCE_ID_BALANCEADOR
 aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID_BALANCEADOR
 
@@ -73,7 +73,7 @@ ELASTIC_IP_NFS_ID=$(aws ec2 describe-addresses \
                    --output text)
 
 aws ec2 disassociate-address --public-ip $ELASTIC_IP_NFS
-aws ec2 release-address --allocation-id $ELASTIC_IP_NFS_ID
+aws ec2 release-address --public-ip $ELASTIC_IP_NFS_ID
 aws ec2 terminate-instances --instance-ids $INSTANCE_ID_NFS
 aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID_NFS
 
