@@ -7,8 +7,9 @@ export AWS_PAGER=""
 INSTANCES=$(aws ec2 describe-instances --filters "Name=instance-state-name,Values=running" --query "Reservations[*].Instances[*].[InstanceId,Tags[?Key=='Name'].Value|[0],PublicIpAddress]" --output text)
 
 # Imprimir resultados
-echo -e "ID de la Instancia\t\tNombre\t\tDirección IP Pública"
-echo -e "----------------------------------------------------------"
+printf "%-20s %-30s %-20s\n" "ID de la Instancia" "Nombre" "Dirección IP Pública"
+printf "%-20s %-30s %-20s\n" "------------------" "------------------------------" "------------------"
+
 echo "$INSTANCES" | while read -r INSTANCE_ID INSTANCE_NAME PUBLIC_IP; do
-    echo -e "$INSTANCE_ID\t$INSTANCE_NAME\t$PUBLIC_IP"
+    printf "%-20s %-30s %-20s\n" "$INSTANCE_ID" "$INSTANCE_NAME" "$PUBLIC_IP"
 done
