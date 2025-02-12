@@ -278,3 +278,24 @@ aws ec2 delete-security-group --group-name $SECURITY_GROUP_NFS
 ![Ejercicio3-2.parte-7](imagenes/ejercicio3-parte7-4.1.png)
 ![Ejercicio3-2-parte-8](imagenes/ejercicio3-parte8-4.1.png)
 ![Ejercicio3-2-parte-9](imagenes/ejercicio3-parte9-4.1.png)
+
+## Ejercicio 4. Modificar los scripts del repositorio de ejemplo para que utilicen la AMI de la última versión de Ubuntu Server. También modificar los scripts para que se ejecute el siguiente comando en las instancias durante el inicio: $ sudo apt update && sudo apt upgrade -y.
+
+Para que los scripts utilicen la AMI de la última versión de ubuntu server, hay que modificar el .env con la AMI de la última versión de ubuntu server y para ello nos dirigimos al ec2 de amazon y miramos la AMI de la última versión de ubuntu server lanzando una instancia, como se puede ver en la imagen:
+
+![Ejercicio4](imagenes/ejercicio4-4.1.png)
+
+Y el .env quedaría tal que así:
+
+```bash
+AMI_ID=ami-04b4f1a9cf54c11d0
+COUNT=1
+INSTANCE_TYPE=t2.small
+KEY_NAME=vockey
+
+SECURITY_GROUP_FRONTEND=frontend-sg
+SECURITY_GROUP_BACKEND=backend-sg
+
+INSTANCE_NAME_FRONTEND=frontend
+INSTANCE_NAME_BACKEND=backend
+```
