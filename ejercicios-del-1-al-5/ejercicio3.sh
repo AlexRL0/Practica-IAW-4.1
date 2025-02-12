@@ -7,13 +7,13 @@ export AWS_PAGER=""
 # Variables de configuración
 source .env
 
-# Crear IPs elásticas
+# Crear IPs elásticas y asociarlas a las instancias
 for i in {1..2}; do
-  ELASTIC_IP_FRONTEND[i]=$(aws ec2 allocate-address --query 'AllocationId')
+  ELASTIC_IP_FRONTEND[i]=$(aws ec2 allocate-address --query 'AllocationId' --output text)
 done
-ELASTIC_IP_BACKEND=$(aws ec2 allocate-address --query 'AllocationId')
-ELASTIC_IP_BALANCEADOR=$(aws ec2 allocate-address --query 'AllocationId')
-ELASTIC_IP_NFS=$(aws ec2 allocate-address --query 'AllocationId')
+ELASTIC_IP_BACKEND=$(aws ec2 allocate-address --query 'AllocationId' --output text)
+ELASTIC_IP_BALANCEADOR=$(aws ec2 allocate-address --query 'AllocationId' --output text)
+ELASTIC_IP_NFS=$(aws ec2 allocate-address --query 'AllocationId' --output text)
 
 # Creamos el grupo de seguridad: frontend-sg
 aws ec2 create-security-group --group-name $SECURITY_GROUP_FRONTEND --description "Reglas para el frontend"
@@ -39,9 +39,9 @@ aws ec2 authorize-security-group-ingress --group-name $SECURITY_GROUP_BALANCEADO
 # Creamos el grupo de seguridad: nfs-sg
 aws ec2 create-security-group --group-name $SECURITY_GROUP_NFS --description "Reglas para el servidor NFS"
 aws ec2 authorize-security-group-ingress --group-name $SECURITY_GROUP_NFS --protocol tcp --port 22 --cidr 0.0.0.0/0
-aws ec2 authorize-security-group-ingress --group-name $SECURITY_GROUP_NFS --protocol tcp --port 2049 
+aws ec2 authorize-security-group-ingress --group-name $SECURITY_GROUP_NFS --protocol tcp --port 2049 --cidr 0.0.0.0/0
 
-# Crear instancias EC2 para el frontend
+# Crear instancias EC2 para el frontend y asociar las IPs elásticas
 for i in {1..2}; do
   INSTANCE_ID=$(aws ec2 run-instances \
     --image-id $AMI_ID \
@@ -50,12 +50,12 @@ for i in {1..2}; do
     --key-name $KEY_NAME \
     --security-groups $SECURITY_GROUP_FRONTEND \
     --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=frontend-$i}]" \
-    --query 'Instances[0].InstanceId')
+    --query 'Instances[0].InstanceId' --output text)
 
   aws ec2 associate-address --instance-id $INSTANCE_ID --allocation-id ${ELASTIC_IP_FRONTEND[i]}
 done
 
-# Crear una instancia EC2 para el backend
+# Crear una instancia EC2 para el backend y asociar la IP elástica
 INSTANCE_ID_BACKEND=$(aws ec2 run-instances \
     --image-id $AMI_ID \
     --count 1 \
@@ -63,11 +63,11 @@ INSTANCE_ID_BACKEND=$(aws ec2 run-instances \
     --key-name $KEY_NAME \
     --security-groups $SECURITY_GROUP_BACKEND \
     --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$INSTANCE_NAME_BACKEND}]" \
-    --query 'Instances[0].InstanceId')
+    --query 'Instances[0].InstanceId' --output text)
 
 aws ec2 associate-address --instance-id $INSTANCE_ID_BACKEND --allocation-id $ELASTIC_IP_BACKEND
 
-# Crear una instancia EC2 para el balanceador de carga
+# Crear una instancia EC2 para el balanceador de carga y asociar la IP elástica
 INSTANCE_ID_BALANCEADOR=$(aws ec2 run-instances \
     --image-id $AMI_ID \
     --count 1 \
@@ -75,11 +75,11 @@ INSTANCE_ID_BALANCEADOR=$(aws ec2 run-instances \
     --key-name $KEY_NAME \
     --security-groups $SECURITY_GROUP_BALANCEADOR \
     --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$INSTANCE_NAME_BALANCEADOR}]" \
-    --query 'Instances[0].InstanceId')
+    --query 'Instances[0].InstanceId' --output text)
 
 aws ec2 associate-address --instance-id $INSTANCE_ID_BALANCEADOR --allocation-id $ELASTIC_IP_BALANCEADOR
 
-# Crear una instancia EC2 para el NFS
+# Crear una instancia EC2 para el NFS y asociar la IP elástica
 INSTANCE_ID_NFS=$(aws ec2 run-instances \
     --image-id $AMI_ID \
     --count 1 \
@@ -87,6 +87,6 @@ INSTANCE_ID_NFS=$(aws ec2 run-instances \
     --key-name $KEY_NAME \
     --security-groups $SECURITY_GROUP_NFS \
     --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$INSTANCE_NAME_NFS}]" \
-    --query 'Instances[0].InstanceId')
+    --query 'Instances[0].InstanceId' --output text)
 
 aws ec2 associate-address --instance-id $INSTANCE_ID_NFS --allocation-id $ELASTIC_IP_NFS

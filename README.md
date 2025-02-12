@@ -216,49 +216,29 @@ export AWS_PAGER=""
 # Variables de configuración
 source .env
 
-# Eliminar instancias EC2 para el frontend
+# Disociar IPs elásticas y liberarlas
 for i in {1..2}; do
-  INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=frontend-$i" --query "Reservations[].Instances[].InstanceId" --output text)
-  if [ -n "$INSTANCE_ID" ]; then
-    aws ec2 modify-instance-attribute --instance-id $INSTANCE_ID --groups ""
-    aws ec2 terminate-instances --instance-ids $INSTANCE_ID
-  fi
+  aws ec2 disassociate-address --association-id $(aws ec2 describe-addresses --query "Addresses[?AllocationId=='${ELASTIC_IP_FRONTEND[i]}'].AssociationId" --output text)
+  aws ec2 release-address --allocation-id ${ELASTIC_IP_FRONTEND[i]}
 done
 
-# Eliminar instancia EC2 para el backend
-INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=$INSTANCE_NAME_BACKEND" --query "Reservations[].Instances[].InstanceId" --output text)
-if [ -n "$INSTANCE_ID" ]; then
-  aws ec2 modify-instance-attribute --instance-id $INSTANCE_ID --groups ""
-  aws ec2 terminate-instances --instance-ids $INSTANCE_ID
-fi
+aws ec2 disassociate-address --association-id $(aws ec2 describe-addresses --query "Addresses[?AllocationId=='$ELASTIC_IP_BACKEND'].AssociationId" --output text)
+aws ec2 release-address --allocation-id $ELASTIC_IP_BACKEND
 
-# Eliminar instancia EC2 para el balanceador de carga
-INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=$INSTANCE_NAME_BALANCEADOR" --query "Reservations[].Instances[].InstanceId" --output text)
-if [ -n "$INSTANCE_ID" ]; then
-  aws ec2 modify-instance-attribute --instance-id $INSTANCE_ID --groups ""
-  aws ec2 terminate-instances --instance-ids $INSTANCE_ID
-fi
+aws ec2 disassociate-address --association-id $(aws ec2 describe-addresses --query "Addresses[?AllocationId=='$ELASTIC_IP_BALANCEADOR'].AssociationId" --output text)
+aws ec2 release-address --allocation-id $ELASTIC_IP_BALANCEADOR
 
-# Eliminar instancia EC2 para el NFS
-INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=$INSTANCE_NAME_NFS" --query "Reservations[].Instances[].InstanceId" --output text)
-if [ -n "$INSTANCE_ID" ]; then
-  aws ec2 modify-instance-attribute --instance-id $INSTANCE_ID --groups ""
-  aws ec2 terminate-instances --instance-ids $INSTANCE_ID
-fi
+aws ec2 disassociate-address --association-id $(aws ec2 describe-addresses --query "Addresses[?AllocationId=='$ELASTIC_IP_NFS'].AssociationId" --output text)
+aws ec2 release-address --allocation-id $ELASTIC_IP_NFS
 
-# Esperar a que todas las instancias se terminen
-aws ec2 wait instance-terminated --instance-ids $(aws ec2 describe-instances --filters "Name=instance-state-name,Values=terminated" --query "Reservations[].Instances[].InstanceId" --output text)
-
-# Eliminar interfaces de red asociadas a los grupos de seguridad
-for SG in $SECURITY_GROUP_FRONTEND $SECURITY_GROUP_BACKEND $SECURITY_GROUP_BALANCEADOR $SECURITY_GROUP_NFS; do
-  NETWORK_INTERFACES=$(aws ec2 describe-network-interfaces --filters "Name=group-name,Values=$SG" --query "NetworkInterfaces[].NetworkInterfaceId" --output text)
-  for NI in $NETWORK_INTERFACES; do
-    aws ec2 modify-network-interface-attribute --network-interface-id $NI --groups ""
-  done
+# Eliminar instancias EC2
+for instance in $(aws ec2 describe-instances --query "Reservations[*].Instances[?Tags[?Key=='Name' && Value=='frontend-*']].InstanceId" --output text); do
+  aws ec2 terminate-instances --instance-ids $instance
 done
 
-# Esperar un momento para asegurarse de que las modificaciones se apliquen
-sleep 30
+aws ec2 terminate-instances --instance-ids $INSTANCE_ID_BACKEND
+aws ec2 terminate-instances --instance-ids $INSTANCE_ID_BALANCEADOR
+aws ec2 terminate-instances --instance-ids $INSTANCE_ID_NFS
 
 # Eliminar grupos de seguridad
 aws ec2 delete-security-group --group-name $SECURITY_GROUP_FRONTEND
