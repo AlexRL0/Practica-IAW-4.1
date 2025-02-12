@@ -299,3 +299,7 @@ SECURITY_GROUP_BACKEND=backend-sg
 INSTANCE_NAME_FRONTEND=frontend
 INSTANCE_NAME_BACKEND=backend
 ```
+
+Y para que se ejecute el comando en las instancias durante el inicio hay que hacerlo así:
+
+![Ejercicio4-parte-2](imagenes/ejercicio4-4.1-parte-2.png)

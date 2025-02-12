@@ -8,6 +8,10 @@ export AWS_PAGER=""
 # Variables de configuración
 source .env
 
+# Script de inicio
+USER_DATA_SCRIPT="#!/bin/bash
+sudo apt update && sudo apt upgrade -y"
+
 # Creamos una intancia EC2 para el frontend
 aws ec2 run-instances \
     --image-id $AMI_ID \
@@ -15,7 +19,8 @@ aws ec2 run-instances \
     --instance-type $INSTANCE_TYPE \
     --key-name $KEY_NAME \
     --security-groups $SECURITY_GROUP_FRONTEND \
-    --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$INSTANCE_NAME_FRONTEND}]"
+    --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$INSTANCE_NAME_FRONTEND}]" \
+    --user-data "$USER_DATA_SCRIPT"
 
 # Creamos una intancia EC2 para el backend
 aws ec2 run-instances \
@@ -24,4 +29,5 @@ aws ec2 run-instances \
     --instance-type $INSTANCE_TYPE \
     --key-name $KEY_NAME \
     --security-groups $SECURITY_GROUP_BACKEND \
-    --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$INSTANCE_NAME_BACKEND}]"
+    --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$INSTANCE_NAME_BACKEND}]" \
+    --user-data "$USER_DATA_SCRIPT"
